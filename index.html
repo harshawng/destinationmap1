@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My page</title>
+    <style>
+      #map {
+      width: 1500px;
+      height: 650px;
+      left: 0;
+      top: 0;  
+      background-color: grey;
+      }
+     {
+      font-family:arial, helvetica;
+      }
+      #container {}
+      #danceparty {
+      margin:4px; 
+      }
+       {
+      display: inline-block; 
+      margin: 0 auto; 
+      text-align:right;
+      }
+      .bigButton {
+      font-size:18px; 
+      }
+    </style>
+  <body>
+    <h1>Destination Locater</h1>
+    <div id="directions">
+      <ul>
+        <li>Use the buttons to change background colours and to use lines and markers. 
+        </li>
+          <li> Use different features on the map to get to your destination. Note that your location will move while using map. You can drag markers from the menu around if you wish. </li>
+          <li> The search bar can help find your location. You can then specifically mark it with one of the icons and then make direction to it with the line tool </li>
+      </ul>
+    </div>
+    <div id="danceparty"> 
+      <input type="button" id="AUTO" class="bigButton" value="AUTO" onclick="doAutoFlip();">
+      <input type="button" id="STOP" class="bigButton" value="STOP" onclick="stopFlip();"> 
+    </div>
+   <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+  </body>
+  </head>
+  <body>
+    <form>
+      <select id="icon_to_use">
+        <option value="school.png">School</option>
+        <option value="hospital.png">Hospital</option>
+        <option value="mall.png">Mall</option>
+        <option value="tims.png">Tim hortans</option>
+        <option value="gas.png">Gas</option>
+      </select>
+    </form>
+      
+    <div id="map">
+      <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCCz4tbgguS3jeg1dpn2HwErkPQYtOQCBA&callback=initMap&libraries=drawing,places"
+              ></script>
+        
+      <script>
+        var map;
+            var old_position;
+          var old_circle;
+          var path;
+           var light = new Array();
+        var colour= 0;
+          var t=0
+        <!-- array of flashlight-->
+        light[0] = 'blue';
+        light[1] = 'orange'; 
+        light [2]= 'red';
+        light [3]= 'purple';
+        light [4]= 'green';
+        
+
+        //start of initmap
+        function initMap() {
+        old_position= new google.maps.Marker({
+                    position: {lat: 43.668657, lng: -79.827224} });
+            old_circle= new google.maps.Circle({
+        center: {lat:43.668657, lng: -79.827224},
+        radius: 100 });
+               map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 15,
+                center: {lat: 43.668657, lng: -79.827224}
+            });
+                if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(set_my_position);
+        }
+        else {
+            alert("Geolocation doesn't work in your browser");
+        }
+            map.addListener('click', function(e) {
+            var location = e.latLng;
+        place_marker(location);
+                  
+        });
+            var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [ 'polyline', 'polygon']
+          }, 
+        });
+        drawingManager.setMap(map);  
+         
+            
+            var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // search bar
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+        });
+
+        var markers = [];
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            markers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+          });
+          map.fitBounds(bounds);
+        });
+            
+        }
+        
+        
+        //start of place_marker
+        function place_marker(location){
+        var emoji = document.getElementById('icon_to_use').value;
+        var marker = new google.maps.Marker({
+        position: location,
+        map: map,
+        animation:google.maps.Animation.BOUNCE,
+        draggable:true,
+        icon: emoji 
+        });
+        console.log(location.lat() + " "+ location.lng() + " " + emoji);
+                
+        }
+       
+        
+        // start of set_my_position
+       function set_my_position(position) {
+                old_position.setMap(null);
+                old_circle.setMap (null);
+                var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                var marker = new google.maps.Marker({
+                    position: pos,
+                    icon: "player.png",
+                    animation:google.maps.Animation.BOUNCE,
+                    map: map   
+                });
+                old_position = marker;
+                              var infowindow = new google.maps.InfoWindow({
+        content: "YOU ARE HERE!"
+        });
+        infowindow.open(map, marker);
+        
+        var brampton = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        var myCity = new google.maps.Circle({
+        center: brampton,
+        radius: 100,
+        strokeColor: "#228B22",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        
+        });
+        myCity.setMap(map);
+        old_circle.setMap=myCity;    
+            }
+          
+        
+        // start of flip
+        function flip(whichway){						
+        document.body.style.backgroundColor = light[whichway]; 
+        }	
+        
+          
+        //start of autoflip
+        function doAutoFlip() {
+        flip (colour)
+        if (colour< light.length){
+           colour++;
+          }
+        else {
+            colour= 0;
+              }
+        t= setTimeout ('doAutoFlip()',300);
+        }
+          
+        
+        function stopFlip() {
+          clearTimeout (t);
+        }
+                      
+        
+         
+      </script>
+    </div>
+  </body>
+</html>
